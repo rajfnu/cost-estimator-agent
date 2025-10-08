@@ -43,8 +43,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global estimator instance
-estimator = CostEstimatorGraph()
+# Global estimator instance (lazy initialization)
+estimator = None
+
+def get_estimator():
+    """Get or create the global estimator instance."""
+    global estimator
+    if estimator is None:
+        estimator = CostEstimatorGraph()
+    return estimator
 
 
 # Pydantic models for API requests/responses
@@ -154,7 +161,7 @@ async def get_health():
         status="healthy",
         timestamp=datetime.now().isoformat(),
         version="0.1.0",
-        supported_providers=estimator.get_supported_providers()
+        supported_providers=get_estimator().get_supported_providers()
     )
 
 
@@ -177,7 +184,7 @@ async def estimate_costs(
 
         # Run estimation
         if request.scenario_analysis:
-            scenarios_result = await estimator.estimate_costs_with_scenarios(spec_dict)
+            scenarios_result = await get_estimator().estimate_costs_with_scenarios(spec_dict)
             state = scenarios_result.get("base")
 
             # Add scenario data to response
@@ -193,7 +200,7 @@ async def estimate_costs(
                     })
 
         else:
-            state = await estimator.estimate_costs(spec_dict, request.estimation_options)
+            state = await get_estimator().estimate_costs(spec_dict, request.estimation_options)
             response = _state_to_response(state)
 
         logger.info(f"Estimation completed: ${response.total_monthly_cost:.2f}/month")
@@ -215,7 +222,7 @@ async def validate_specification(specification: ApplicationSpecification):
     try:
         # Convert to dict and validate
         spec_dict = specification.dict()
-        validation_result = estimator.validate_specification(spec_dict)
+        validation_result = get_estimator().validate_specification(spec_dict)
 
         return ValidationResponse(
             valid=validation_result["valid"],
@@ -249,7 +256,7 @@ async def compare_scenarios(
         # Process each scenario
         for name, spec in scenarios.items():
             spec_dict = spec.dict()
-            state = await estimator.estimate_costs(spec_dict)
+            state = await get_estimator().estimate_costs(spec_dict)
 
             if state.total_monthly_cost:
                 results[name] = {
@@ -289,7 +296,7 @@ async def compare_scenarios(
 @app.get("/providers")
 async def get_supported_providers():
     """Get list of supported cloud and AI service providers."""
-    return estimator.get_supported_providers()
+    return get_estimator().get_supported_providers()
 
 
 @app.get("/templates")

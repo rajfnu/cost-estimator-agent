@@ -7,7 +7,7 @@ multi-agent AI applications.
 """
 
 from .state import CostEstimationState
-from .graph import CostEstimatorGraph
+from .graph import CostEstimatorGraph, estimate_application_costs
 from .nodes import (
     InputParserAgent,
     UsagePatternAnalyzer,
@@ -20,6 +20,7 @@ from .nodes import (
 __all__ = [
     "CostEstimationState",
     "CostEstimatorGraph",
+    "estimate_application_costs",
     "InputParserAgent",
     "UsagePatternAnalyzer",
     "CostDiscoveryAgent",

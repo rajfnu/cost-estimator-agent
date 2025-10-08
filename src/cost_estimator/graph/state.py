@@ -5,7 +5,7 @@ Defines the shared state that flows through the LangGraph agents during
 cost estimation analysis.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
 from dataclasses import dataclass, field
 from decimal import Decimal
 

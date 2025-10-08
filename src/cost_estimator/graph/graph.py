@@ -7,7 +7,7 @@ intelligent cost estimation system, coordinating all specialized agents.
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 import uuid
 
@@ -129,6 +129,21 @@ class CostEstimatorGraph:
             return "error"
         return "continue"
 
+    def _dict_to_state(self, state_dict: Dict[str, Any]) -> CostEstimationState:
+        """Convert dictionary back to CostEstimationState object."""
+        from .state import CostEstimationState, CostBreakdown, UsageEstimate, PricingData, OptimizationSuggestion, ScenarioAnalysis
+        from decimal import Decimal
+
+        # Create a new state object
+        state = CostEstimationState()
+
+        # Copy simple fields
+        for field_name, value in state_dict.items():
+            if hasattr(state, field_name):
+                setattr(state, field_name, value)
+
+        return state
+
     async def estimate_costs(
         self,
         specification: Dict[str, Any],
@@ -160,6 +175,11 @@ class CostEstimatorGraph:
             # Execute the graph
             config = {"configurable": {"thread_id": initial_state.estimation_id}}
             final_state = await self._graph.ainvoke(initial_state, config=config)
+
+            # LangGraph converts dataclass to dict, so we need to convert it back
+            if isinstance(final_state, dict):
+                logger.info("Converting dict result back to CostEstimationState")
+                final_state = self._dict_to_state(final_state)
 
             # Calculate processing time
             processing_time = (datetime.now() - start_time).total_seconds()

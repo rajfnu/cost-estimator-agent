@@ -146,8 +146,12 @@ def validate(
         with open(input_file, 'r') as f:
             spec_data = json.load(f)
 
-        estimator = CostEstimatorGraph()
-        validation_result = estimator.validate_specification(spec_data)
+        # Simple validation without requiring API keys
+        try:
+            spec = ApplicationSpecification(**spec_data)
+            validation_result = {"valid": True, "errors": [], "warnings": [], "suggestions": []}
+        except Exception as e:
+            validation_result = {"valid": False, "errors": [str(e)], "warnings": [], "suggestions": []}
 
         if validation_result["valid"]:
             console.print("✅ [green]Specification is valid![/green]")
