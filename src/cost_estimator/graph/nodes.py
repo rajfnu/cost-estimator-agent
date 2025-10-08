@@ -19,6 +19,7 @@ from pydantic import ValidationError
 
 from ..schemas import ApplicationSpecification, ComplexityLevel
 from .state import CostEstimationState, UsageEstimate, PricingData, CostBreakdown, OptimizationSuggestion
+from ..auth import APIKeyStatus
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +27,14 @@ logger = logging.getLogger(__name__)
 class BaseAgent:
     """Base class for all cost estimation agents."""
 
-    def __init__(self, llm: Optional[ChatOpenAI] = None):
+    def __init__(self, llm: Optional[ChatOpenAI] = None, api_status: Optional[APIKeyStatus] = None):
         self._llm = llm
+        self._api_status = api_status or APIKeyStatus()
 
     @property
-    def llm(self) -> ChatOpenAI:
+    def llm(self) -> Optional[ChatOpenAI]:
         """Lazy initialization of LLM client."""
-        if self._llm is None:
+        if self._llm is None and self._api_status.has_llm_keys:
             try:
                 self._llm = ChatOpenAI(
                     model="gpt-4-turbo-preview",
@@ -41,14 +43,19 @@ class BaseAgent:
                 )
                 # Test if we can actually use the LLM
                 self._llm.get_token_ids("test")
+                logger.info("LLM client initialized successfully")
             except Exception as e:
                 logger.warning(f"LLM initialization failed: {e}. Using mock mode.")
-                self._llm = None  # Will trigger mock behavior
+                self._llm = None
         return self._llm
 
     def use_mock_mode(self) -> bool:
         """Check if we should use mock mode due to missing API keys."""
-        return self._llm is None
+        return self._api_status.should_use_mock_mode() or self._llm is None
+
+    def get_confidence_adjustment(self) -> float:
+        """Get confidence score adjustment based on API key availability."""
+        return self._api_status.get_confidence_adjustment()
 
     async def invoke(
         self,

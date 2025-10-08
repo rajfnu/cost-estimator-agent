@@ -21,6 +21,7 @@ from rich.markdown import Markdown
 
 from .graph import CostEstimatorGraph, estimate_application_costs
 from .schemas import ApplicationSpecification
+from .auth import ensure_minimum_keys, check_api_keys
 
 # Initialize CLI app and console
 app = typer.Typer(
@@ -69,6 +70,9 @@ def estimate(
     """
     console.print("🤖 [bold blue]AI Multi-Agent Cost Estimator[/bold blue]")
     console.print()
+
+    # Check API keys and prompt user if needed
+    api_status = ensure_minimum_keys("cost estimation")
 
     try:
         # Load specification
@@ -281,6 +285,22 @@ def init(
     except Exception as e:
         console.print(f"❌ [red]Failed to create specification: {e}[/red]")
         sys.exit(1)
+
+
+@app.command()
+def setup():
+    """
+    Interactive setup for API keys and configuration.
+
+    Guides you through setting up API keys for optimal functionality.
+    """
+    console.print("🔧 [bold blue]Cost Estimator Setup[/bold blue]")
+    console.print()
+
+    # Force check and show status
+    api_status = check_api_keys(interactive=True, force_check=True)
+
+    console.print("✅ [green]Setup complete! You can now run cost estimations.[/green]")
 
 
 @app.command()

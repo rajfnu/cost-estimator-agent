@@ -9,8 +9,12 @@ import os
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-from pydantic import BaseSettings, Field, validator
-from pydantic_settings import SettingsConfigDict
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+try:
+    from pydantic import field_validator
+except ImportError:
+    from pydantic import validator as field_validator
 
 
 class LLMConfig(BaseSettings):
