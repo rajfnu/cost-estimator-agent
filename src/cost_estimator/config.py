@@ -67,7 +67,7 @@ class PricingConfig(BaseSettings):
     custom_pricing_api_url: Optional[str] = Field(default=None, env="CUSTOM_PRICING_API_URL")
     custom_pricing_api_key: Optional[str] = Field(default=None, env="CUSTOM_PRICING_API_KEY")
 
-    @validator('pricing_cache_ttl_hours')
+    @field_validator('pricing_cache_ttl_hours')
     def validate_cache_ttl(cls, v):
         if v < 1 or v > 168:  # 1 hour to 1 week
             raise ValueError("Cache TTL must be between 1 and 168 hours")
@@ -100,7 +100,7 @@ class ObservabilityConfig(BaseSettings):
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     log_format: str = Field(default="json", env="LOG_FORMAT")  # json or text
 
-    @validator('log_level')
+    @field_validator('log_level')
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
@@ -111,7 +111,7 @@ class ObservabilityConfig(BaseSettings):
 class SecurityConfig(BaseSettings):
     """Configuration for security settings."""
 
-    secret_key: str = Field(env="SECRET_KEY")
+    secret_key: str = Field(default="development-secret-key-change-in-production", env="SECRET_KEY")
     allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], env="ALLOWED_HOSTS")
     cors_origins: List[str] = Field(
         default=["http://localhost:3000", "http://localhost:8080"],
@@ -122,13 +122,13 @@ class SecurityConfig(BaseSettings):
     rate_limit_requests_per_minute: int = Field(default=100, env="RATE_LIMIT_REQUESTS_PER_MINUTE")
     rate_limit_burst: int = Field(default=20, env="RATE_LIMIT_BURST")
 
-    @validator('secret_key')
+    @field_validator('secret_key')
     def validate_secret_key(cls, v):
         if len(v) < 32:
             raise ValueError("Secret key must be at least 32 characters long")
         return v
 
-    @validator('allowed_hosts', 'cors_origins', pre=True)
+    @field_validator('allowed_hosts', 'cors_origins', mode='before')
     def parse_comma_separated(cls, v):
         if isinstance(v, str):
             return [host.strip() for host in v.split(',') if host.strip()]
@@ -179,14 +179,14 @@ class AppConfig(BaseSettings):
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     features: FeatureFlags = Field(default_factory=FeatureFlags)
 
-    @validator('environment')
+    @field_validator('environment')
     def validate_environment(cls, v):
         valid_envs = ["development", "staging", "production"]
         if v not in valid_envs:
             raise ValueError(f"Environment must be one of {valid_envs}")
         return v
 
-    @validator('api_port')
+    @field_validator('api_port')
     def validate_api_port(cls, v):
         if v < 1 or v > 65535:
             raise ValueError("API port must be between 1 and 65535")
