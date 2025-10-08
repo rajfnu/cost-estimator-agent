@@ -1,0 +1,164 @@
+{
+  "application": {
+    "name": "ImpactWon - Sales Coach in Pocket",
+    "description": "AI-powered sales coaching platform providing real-time guidance, deal analysis, and performance optimization for sales professionals",
+    "complexity": "high",
+    "expected_users": 2500,
+    "usage_patterns": {
+      "sessions_per_user_month": 25,
+      "avg_session_duration_minutes": 18,
+      "peak_concurrency_ratio": 0.15,
+      "seasonal_variance": 0.3,
+      "growth_rate_monthly": 0.08,
+      "retention_rate": 0.85
+    },
+    "industry": "sales_technology",
+    "compliance_requirements": ["SOC2", "GDPR"]
+  },
+  "agents": [
+    {
+      "name": "CoachingAgent",
+      "role": "primary_coach",
+      "llm_config": {
+        "name": "gpt-4-turbo",
+        "provider": "openai",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 1200,
+        "latency_requirements_ms": 2000
+      },
+      "tools": [
+        {
+          "name": "crm_integration",
+          "type": "api",
+          "provider": "salesforce",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 5
+        },
+        {
+          "name": "deal_analyzer",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 3
+        },
+        {
+          "name": "performance_tracker",
+          "type": "integration",
+          "usage_frequency": "periodic",
+          "api_calls_per_session": 2
+        }
+      ],
+      "complexity": "high",
+      "interaction_frequency": "continuous",
+      "coordination_overhead": 0.2,
+      "prompt_engineering_complexity": "high",
+      "memory_requirements": "conversation_history"
+    },
+    {
+      "name": "DealScoringAgent",
+      "role": "deal_analysis",
+      "llm_config": {
+        "name": "claude-3-sonnet",
+        "provider": "anthropic",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 800,
+        "latency_requirements_ms": 3000
+      },
+      "tools": [
+        {
+          "name": "risk_assessor",
+          "type": "local",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 2
+        },
+        {
+          "name": "market_data",
+          "type": "api",
+          "provider": "external",
+          "usage_frequency": "occasional",
+          "api_calls_per_session": 1
+        }
+      ],
+      "complexity": "medium",
+      "interaction_frequency": "on_demand",
+      "coordination_overhead": 0.15,
+      "prompt_engineering_complexity": "medium"
+    },
+    {
+      "name": "PersonalizationAgent",
+      "role": "user_adaptation",
+      "llm_config": {
+        "name": "gpt-3.5-turbo",
+        "provider": "openai",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 600,
+        "latency_requirements_ms": 1500
+      },
+      "tools": [
+        {
+          "name": "user_profiler",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 4
+        },
+        {
+          "name": "behavior_analyzer",
+          "type": "integration",
+          "usage_frequency": "periodic",
+          "api_calls_per_session": 1
+        }
+      ],
+      "complexity": "medium",
+      "interaction_frequency": "periodic",
+      "coordination_overhead": 0.1,
+      "prompt_engineering_complexity": "medium"
+    }
+  ],
+  "infrastructure": {
+    "deployment_type": "cloud",
+    "cloud_provider": "aws",
+    "region": "us-east-1",
+    "availability_zones": 3,
+    "scaling_strategy": "auto",
+    "availability_requirement": 99.9,
+    "load_balancing_required": true,
+    "cdn_required": true,
+    "vpn_required": false,
+    "monitoring_level": "high",
+    "logging_retention_days": 90
+  },
+  "data_requirements": {
+    "vector_stores": [
+      {
+        "provider": "pinecone",
+        "deployment_mode": "managed",
+        "estimated_vectors": 500000,
+        "vector_dimensions": 1536,
+        "storage_gb": 75,
+        "queries_per_second": 150,
+        "index_rebuild_frequency": "weekly"
+      },
+      {
+        "provider": "weaviate",
+        "deployment_mode": "managed",
+        "estimated_vectors": 200000,
+        "vector_dimensions": 768,
+        "storage_gb": 30,
+        "queries_per_second": 80,
+        "index_rebuild_frequency": "daily"
+      }
+    ],
+    "document_processing_monthly": 15000,
+    "data_ingestion_gb_monthly": 120,
+    "real_time_sync_required": true,
+    "backup_retention_days": 90,
+    "compliance_encryption": true
+  },
+  "cost_constraints": {
+    "monthly_budget_usd": 8000,
+    "cost_optimization_priority": ["llm_costs", "infrastructure", "vector_storage", "data_processing"],
+    "acceptable_performance_tradeoff": 0.15,
+    "prefer_managed_services": true
+  },
+  "specification_version": "1.0",
+  "created_at": "2024-10-08T21:30:00Z"
+}

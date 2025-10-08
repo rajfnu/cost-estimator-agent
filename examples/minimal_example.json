@@ -1,0 +1,65 @@
+{
+  "application": {
+    "name": "Simple Chat Assistant",
+    "description": "Basic single-agent chat assistant for general inquiries",
+    "complexity": "low",
+    "expected_users": 500,
+    "usage_patterns": {
+      "sessions_per_user_month": 5,
+      "avg_session_duration_minutes": 8,
+      "peak_concurrency_ratio": 0.05,
+      "seasonal_variance": 0.1,
+      "growth_rate_monthly": 0.02,
+      "retention_rate": 0.75
+    },
+    "industry": "general",
+    "compliance_requirements": []
+  },
+  "agents": [
+    {
+      "name": "ChatAgent",
+      "role": "general_assistant",
+      "llm_config": {
+        "name": "gpt-3.5-turbo",
+        "provider": "openai",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 400,
+        "latency_requirements_ms": 1000
+      },
+      "tools": [],
+      "complexity": "low",
+      "interaction_frequency": "on_demand",
+      "coordination_overhead": 0.0,
+      "prompt_engineering_complexity": "low"
+    }
+  ],
+  "infrastructure": {
+    "deployment_type": "cloud",
+    "cloud_provider": "aws",
+    "region": "us-west-2",
+    "availability_zones": 1,
+    "scaling_strategy": "manual",
+    "availability_requirement": 99.0,
+    "load_balancing_required": false,
+    "cdn_required": false,
+    "vpn_required": false,
+    "monitoring_level": "low",
+    "logging_retention_days": 30
+  },
+  "data_requirements": {
+    "vector_stores": [],
+    "document_processing_monthly": 100,
+    "data_ingestion_gb_monthly": 5,
+    "real_time_sync_required": false,
+    "backup_retention_days": 7,
+    "compliance_encryption": false
+  },
+  "cost_constraints": {
+    "monthly_budget_usd": 500,
+    "cost_optimization_priority": ["llm_costs", "infrastructure"],
+    "acceptable_performance_tradeoff": 0.2,
+    "prefer_managed_services": true
+  },
+  "specification_version": "1.0",
+  "created_at": "2024-10-08T21:30:00Z"
+}

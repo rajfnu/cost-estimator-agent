@@ -1,0 +1,2 @@
+# This file ensures the end-to-end tests directory is tracked by git
+# E2E tests will be added in subsequent development phases

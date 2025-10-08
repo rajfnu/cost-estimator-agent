@@ -1,0 +1,197 @@
+{
+  "application": {
+    "name": "ContentFlow AI",
+    "description": "Multi-agent content generation pipeline with research, writing, editing, and review capabilities",
+    "complexity": "high",
+    "expected_users": 200,
+    "usage_patterns": {
+      "sessions_per_user_month": 40,
+      "avg_session_duration_minutes": 45,
+      "peak_concurrency_ratio": 0.3,
+      "seasonal_variance": 0.2,
+      "growth_rate_monthly": 0.12,
+      "retention_rate": 0.95
+    },
+    "industry": "marketing_technology",
+    "compliance_requirements": ["SOC2"]
+  },
+  "agents": [
+    {
+      "name": "ResearchAgent",
+      "role": "content_research",
+      "llm_config": {
+        "name": "gpt-4-turbo",
+        "provider": "openai",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 2000,
+        "latency_requirements_ms": 5000
+      },
+      "tools": [
+        {
+          "name": "web_search",
+          "type": "api",
+          "provider": "serp_api",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 8
+        },
+        {
+          "name": "fact_checker",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 5
+        },
+        {
+          "name": "source_validator",
+          "type": "integration",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 3
+        }
+      ],
+      "complexity": "high",
+      "interaction_frequency": "continuous",
+      "coordination_overhead": 0.25,
+      "prompt_engineering_complexity": "high"
+    },
+    {
+      "name": "WritingAgent",
+      "role": "content_creation",
+      "llm_config": {
+        "name": "claude-3-opus",
+        "provider": "anthropic",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 3000,
+        "latency_requirements_ms": 8000
+      },
+      "tools": [
+        {
+          "name": "style_guide",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 4
+        },
+        {
+          "name": "plagiarism_checker",
+          "type": "api",
+          "provider": "copyscape",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 2
+        }
+      ],
+      "complexity": "critical",
+      "interaction_frequency": "continuous",
+      "coordination_overhead": 0.3,
+      "prompt_engineering_complexity": "critical"
+    },
+    {
+      "name": "EditingAgent",
+      "role": "content_editing",
+      "llm_config": {
+        "name": "gpt-4-turbo",
+        "provider": "openai",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 2500,
+        "latency_requirements_ms": 6000
+      },
+      "tools": [
+        {
+          "name": "grammar_checker",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 6
+        },
+        {
+          "name": "readability_analyzer",
+          "type": "integration",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 3
+        }
+      ],
+      "complexity": "high",
+      "interaction_frequency": "continuous",
+      "coordination_overhead": 0.2,
+      "prompt_engineering_complexity": "high"
+    },
+    {
+      "name": "ReviewAgent",
+      "role": "quality_assurance",
+      "llm_config": {
+        "name": "claude-3-sonnet",
+        "provider": "anthropic",
+        "deployment_mode": "api",
+        "expected_tokens_per_request": 1800,
+        "latency_requirements_ms": 4000
+      },
+      "tools": [
+        {
+          "name": "quality_scorer",
+          "type": "local",
+          "usage_frequency": "continuous",
+          "api_calls_per_session": 4
+        },
+        {
+          "name": "brand_compliance",
+          "type": "integration",
+          "usage_frequency": "frequent",
+          "api_calls_per_session": 2
+        }
+      ],
+      "complexity": "medium",
+      "interaction_frequency": "periodic",
+      "coordination_overhead": 0.15,
+      "prompt_engineering_complexity": "medium"
+    }
+  ],
+  "infrastructure": {
+    "deployment_type": "cloud",
+    "cloud_provider": "gcp",
+    "region": "us-central1",
+    "availability_zones": 3,
+    "scaling_strategy": "predictive",
+    "availability_requirement": 99.9,
+    "load_balancing_required": true,
+    "cdn_required": true,
+    "vpn_required": true,
+    "monitoring_level": "high",
+    "logging_retention_days": 180
+  },
+  "data_requirements": {
+    "vector_stores": [
+      {
+        "provider": "milvus",
+        "deployment_mode": "self_hosted",
+        "estimated_vectors": 2000000,
+        "vector_dimensions": 1536,
+        "storage_gb": 300,
+        "queries_per_second": 300,
+        "index_rebuild_frequency": "real_time",
+        "infrastructure_requirements": {
+          "vm_type": "n2-highmem-8",
+          "vm_count": 3,
+          "storage_type": "ssd"
+        }
+      },
+      {
+        "provider": "elasticsearch",
+        "deployment_mode": "managed",
+        "estimated_vectors": 1000000,
+        "vector_dimensions": 768,
+        "storage_gb": 150,
+        "queries_per_second": 200,
+        "index_rebuild_frequency": "weekly"
+      }
+    ],
+    "document_processing_monthly": 50000,
+    "data_ingestion_gb_monthly": 500,
+    "real_time_sync_required": true,
+    "backup_retention_days": 365,
+    "compliance_encryption": true
+  },
+  "cost_constraints": {
+    "monthly_budget_usd": 15000,
+    "cost_optimization_priority": ["infrastructure", "llm_costs", "data_processing", "vector_storage"],
+    "acceptable_performance_tradeoff": 0.05,
+    "prefer_managed_services": false
+  },
+  "specification_version": "1.0",
+  "created_at": "2024-10-08T21:30:00Z"
+}
