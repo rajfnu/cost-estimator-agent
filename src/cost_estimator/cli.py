@@ -22,6 +22,7 @@ from rich.markdown import Markdown
 from .graph import CostEstimatorGraph, estimate_application_costs
 from .schemas import ApplicationSpecification
 from .auth import ensure_minimum_keys, check_api_keys
+from .cache import get_cache_manager, invalidate_cache
 
 # Initialize CLI app and console
 app = typer.Typer(
@@ -327,6 +328,90 @@ def providers():
 
         console.print(table)
         console.print()
+
+
+@app.command()
+def cache(
+    action: str = typer.Argument(..., help="Action: stats, clear, or info"),
+):
+    """
+    Manage the intelligent caching system.
+
+    Actions:
+    - stats: Show cache statistics
+    - clear: Clear all caches
+    - info: Show cache configuration
+    """
+    cache_manager = get_cache_manager()
+
+    if action == "stats":
+        console.print("📊 [bold blue]Cache Statistics[/bold blue]")
+        console.print()
+
+        stats = cache_manager.get_cache_stats()
+
+        # Overall stats
+        table = Table(title="Overall Cache Performance")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Cache Hits", str(stats["overall"]["hits"]))
+        table.add_row("Cache Misses", str(stats["overall"]["misses"]))
+        table.add_row("Hit Rate", f"{stats['hit_rate']:.1%}")
+        table.add_row("LLM Calls Saved", str(stats["overall"]["llm_calls_saved"]))
+        table.add_row("API Calls Saved", str(stats["overall"]["api_calls_saved"]))
+
+        console.print(table)
+        console.print()
+
+        # Memory cache stats
+        memory_stats = stats["memory_cache"]
+        mem_table = Table(title="Memory Cache")
+        mem_table.add_column("Metric", style="cyan")
+        mem_table.add_column("Value", style="yellow")
+
+        mem_table.add_row("Total Keys", str(memory_stats["total_keys"]))
+        mem_table.add_row("Max Size", str(memory_stats["max_size"]))
+        mem_table.add_row("Total Size", f"{memory_stats['total_size_bytes'] / 1024:.2f} KB")
+        mem_table.add_row("Total Hits", str(memory_stats["total_hits"]))
+
+        console.print(mem_table)
+
+    elif action == "clear":
+        if Confirm.ask("Are you sure you want to clear all caches?"):
+            invalidate_cache()
+            console.print("✅ [green]All caches cleared successfully[/green]")
+        else:
+            console.print("Cache clear cancelled")
+
+    elif action == "info":
+        console.print("ℹ️  [bold blue]Cache Configuration[/bold blue]")
+        console.print()
+
+        stats = cache_manager.get_cache_stats()
+        config = stats["config"]
+
+        table = Table(title="Cache Settings")
+        table.add_column("Setting", style="cyan")
+        table.add_column("Value", style="green")
+
+        table.add_row("Cache Enabled", "✅ Yes" if config.get("enabled") else "❌ No")
+        table.add_row("Cache Full Estimations", "✅ Yes" if config.get("cache_full_estimations") else "❌ No")
+        table.add_row("Cache LLM Results", "✅ Yes" if config.get("cache_llm_results") else "❌ No")
+        table.add_row("Cache Pricing Data", "✅ Yes" if config.get("cache_pricing") else "❌ No")
+        table.add_row("Memory Cache Size", str(config.get("memory_max_size")))
+        table.add_row("Memory TTL", f"{config.get('memory_ttl')}s ({config.get('memory_ttl') // 3600}h)")
+        table.add_row("Disk TTL", f"{config.get('disk_ttl')}s ({config.get('disk_ttl') // 3600}h)")
+        table.add_row("LLM Cache TTL", f"{config.get('llm_ttl')}s ({config.get('llm_ttl') // 86400}d)")
+        table.add_row("Pricing Cache TTL", f"{config.get('pricing_ttl')}s ({config.get('pricing_ttl') // 86400}d)")
+        table.add_row("Cache Directory", config.get("cache_dir", "N/A"))
+
+        console.print(table)
+
+    else:
+        console.print(f"❌ [red]Unknown action: {action}[/red]")
+        console.print("Valid actions: stats, clear, info")
+        sys.exit(1)
 
 
 async def _run_estimation(spec_data: Dict[str, Any], scenario_analysis: bool, progress, task) -> Any:

@@ -20,6 +20,13 @@ except ImportError:
 class LLMConfig(BaseSettings):
     """Configuration for LLM providers."""
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
     openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
     azure_openai_api_key: Optional[str] = Field(default=None, env="AZURE_OPENAI_API_KEY")
@@ -36,6 +43,13 @@ class LLMConfig(BaseSettings):
 
 class CloudConfig(BaseSettings):
     """Configuration for cloud provider credentials."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
     # AWS
     aws_access_key_id: Optional[str] = Field(default=None, env="AWS_ACCESS_KEY_ID")
@@ -135,6 +149,46 @@ class SecurityConfig(BaseSettings):
         return v
 
 
+class CacheConfig(BaseSettings):
+    """Configuration for intelligent caching system."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+    # Cache enablement
+    cache_enabled: bool = Field(default=True, env="CACHE_ENABLED")
+    cache_full_estimations: bool = Field(default=True, env="CACHE_FULL_ESTIMATIONS")
+    cache_llm_results: bool = Field(default=True, env="CACHE_LLM_RESULTS")
+    cache_pricing_data: bool = Field(default=True, env="CACHE_PRICING_DATA")
+
+    # Memory cache settings
+    memory_cache_size: int = Field(default=100, env="MEMORY_CACHE_SIZE")
+    memory_cache_ttl: int = Field(default=3600, env="MEMORY_CACHE_TTL")  # 1 hour
+
+    # Disk cache settings
+    disk_cache_ttl: int = Field(default=86400, env="DISK_CACHE_TTL")  # 24 hours
+    cache_directory: str = Field(default=".cache/cost_estimator", env="CACHE_DIRECTORY")
+
+    # TTL for specific cache types
+    pricing_cache_ttl: int = Field(default=604800, env="PRICING_CACHE_TTL")  # 7 days
+    llm_cache_ttl: int = Field(default=2592000, env="LLM_CACHE_TTL")  # 30 days
+    estimation_cache_ttl: int = Field(default=86400, env="ESTIMATION_CACHE_TTL")  # 24 hours
+
+    # Cache invalidation
+    auto_invalidate_on_version_change: bool = Field(default=True, env="AUTO_INVALIDATE_ON_VERSION_CHANGE")
+    cache_version: str = Field(default="1.0", env="CACHE_VERSION")
+
+    @field_validator('memory_cache_size')
+    def validate_memory_cache_size(cls, v):
+        if v < 1 or v > 10000:
+            raise ValueError("Memory cache size must be between 1 and 10000")
+        return v
+
+
 class FeatureFlags(BaseSettings):
     """Feature flags for enabling/disabling functionality."""
 
@@ -178,6 +232,7 @@ class AppConfig(BaseSettings):
     observability: ObservabilityConfig = Field(default_factory=ObservabilityConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     features: FeatureFlags = Field(default_factory=FeatureFlags)
+    cache: CacheConfig = Field(default_factory=CacheConfig)
 
     @field_validator('environment')
     def validate_environment(cls, v):

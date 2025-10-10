@@ -23,6 +23,8 @@ from .nodes import (
     OptimizationAdvisorAgent,
     ReportGeneratorAgent,
 )
+from ..cache import get_cache_manager
+from ..config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -150,15 +152,31 @@ class CostEstimatorGraph:
         options: Optional[Dict[str, Any]] = None
     ) -> CostEstimationState:
         """
-        Main entry point for cost estimation.
+        Main entry point for cost estimation with intelligent caching.
 
         Args:
             specification: Application specification dictionary
-            options: Additional estimation options
+            options: Additional estimation options (force_refresh, etc.)
 
         Returns:
             Complete cost estimation state with results
         """
+        options = options or {}
+        force_refresh = options.get("force_refresh", False)
+
+        # Get cache manager and config
+        config = get_config()
+        cache_manager = get_cache_manager()
+
+        # Check cache first (unless force_refresh is True)
+        if config.cache.cache_enabled and not force_refresh:
+            cached_result = cache_manager.get_estimation(specification)
+            if cached_result is not None:
+                logger.info("✅ Using cached estimation result - no LLM/API calls needed")
+                # Add cache hit indicator
+                cached_result.calculation_notes.append("Result retrieved from cache")
+                return cached_result
+
         # Initialize state
         initial_state = CostEstimationState(
             estimation_id=str(uuid.uuid4()),
@@ -173,8 +191,8 @@ class CostEstimatorGraph:
             logger.info(f"Starting cost estimation for: {specification.get('application', {}).get('name', 'Unknown')}")
 
             # Execute the graph
-            config = {"configurable": {"thread_id": initial_state.estimation_id}}
-            final_state = await self._graph.ainvoke(initial_state, config=config)
+            config_dict = {"configurable": {"thread_id": initial_state.estimation_id}}
+            final_state = await self._graph.ainvoke(initial_state, config=config_dict)
 
             # LangGraph converts dataclass to dict, so we need to convert it back
             if isinstance(final_state, dict):
@@ -194,6 +212,15 @@ class CostEstimatorGraph:
 
             if final_state.has_errors():
                 logger.warning(f"Estimation completed with {len(final_state.errors)} errors")
+
+            # Cache the result if caching is enabled and estimation was successful
+            if config.cache.cache_enabled and not final_state.has_errors():
+                cache_manager.set_estimation(
+                    specification,
+                    final_state,
+                    ttl=config.cache.estimation_cache_ttl
+                )
+                logger.info("💾 Cached estimation result for future use")
 
             return final_state
 
