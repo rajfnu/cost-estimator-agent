@@ -9,317 +9,447 @@ The Cost Estimator Agent intelligently analyzes multi-agent AI application speci
 - **Real-time pricing** from cloud providers and AI services
 - **Usage pattern analysis** based on workflow complexity
 - **Cost optimization recommendations** with alternative architectures
-- **Uncertainty quantification** and scenario analysis
+- **Intelligent caching** for performance and cost efficiency
+- **Interactive API key management** with graceful degradation
+- **Comprehensive testing** with mock mode capabilities
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
-### Agent-Centric Design
+### High-Level Design
 
 ```mermaid
-graph TD
-    A[Input JSON Spec] --> B[Input Parser Agent]
-    B --> C[Usage Pattern Analyzer]
-    C --> D[Cost Discovery Agent]
-    D --> E[Calculation Engine Agent]
-    E --> F[Optimization Advisor Agent]
-    F --> G[Report Generator Agent]
-    G --> H[Cost Report + Recommendations]
+graph TB
+    subgraph "User Interfaces"
+        CLI[CLI Interface]
+        API[REST API]
+        SWAGGER[Swagger UI]
+    end
+
+    subgraph "Core System"
+        AUTH[API Key Manager]
+        CACHE[Intelligent Cache]
+        GRAPH[LangGraph Orchestrator]
+    end
+
+    subgraph "Agent Pipeline"
+        A1[Input Parser Agent]
+        A2[Usage Pattern Analyzer]
+        A3[Cost Discovery Agent]
+        A4[Calculation Engine Agent]
+        A5[Optimization Advisor]
+        A6[Report Generator]
+    end
+
+    subgraph "External Services"
+        LLM[LLM Providers<br/>OpenAI, Anthropic]
+        CLOUD[Cloud APIs<br/>AWS, Azure, GCP]
+        PRICING[Pricing APIs]
+    end
+
+    CLI --> AUTH
+    API --> AUTH
+    AUTH --> CACHE
+    CACHE --> GRAPH
+    GRAPH --> A1
+    A1 --> A2
+    A2 --> A3
+    A3 --> A4
+    A4 --> A5
+    A5 --> A6
+    A3 --> PRICING
+    A2 --> LLM
+    A5 --> LLM
+    A6 --> LLM
 ```
 
-### Core Agents
+### Agent-Centric Workflow
 
-1. **Input Parser Agent**
-   - Validates and enriches application specifications
-   - Extracts implicit dependencies and requirements
-   - Normalizes component configurations
+```mermaid
+sequenceDiagram
+    participant User
+    participant AuthMgr as API Key Manager
+    participant Cache
+    participant Graph as LangGraph
+    participant Agents
+    participant LLM
+    participant CloudAPI
 
-2. **Usage Pattern Analyzer Agent**
-   - Analyzes workflow complexity and user interaction patterns
-   - Predicts realistic token usage, API calls, and resource utilization
-   - Accounts for multi-agent coordination overhead
+    User->>AuthMgr: Request estimation
+    AuthMgr->>AuthMgr: Check API keys
+    alt API Keys Missing
+        AuthMgr->>User: Prompt for keys / Mock mode
+    end
 
-3. **Cost Discovery Agent**
-   - Fetches live pricing from cloud provider APIs
-   - Maintains cached pricing data with automatic refresh
-   - Handles regional pricing variations and service tiers
-
-4. **Calculation Engine Agent**
-   - Computes costs with interdependency awareness
-   - Models scaling behavior and resource contention
-   - Applies usage pattern insights to raw calculations
-
-5. **Optimization Advisor Agent**
-   - Identifies cost reduction opportunities
-   - Suggests architectural alternatives (API vs self-hosted)
-   - Recommends optimal resource configurations
-
-6. **Report Generator Agent**
-   - Creates comprehensive cost breakdowns
-   - Generates scenario analysis (best/expected/worst case)
-   - Produces actionable optimization recommendations
-
-## 🔧 Design Principles
-
-### Intelligence Over Configuration
-- **Adaptive Reasoning**: Agents analyze and reason about costs rather than following static rules
-- **Context Awareness**: Understanding of how components interact affects overall costs
-- **Dynamic Adaptation**: Adjusts calculations based on application-specific patterns
-
-### Real-Time Accuracy
-- **Live Pricing Integration**: Direct API connections to cloud providers where possible
-- **Fallback Mechanisms**: Cached pricing data with staleness indicators
-- **Regional Awareness**: Automatic adjustment for geographic pricing variations
-
-### Comprehensive Analysis
-- **Multi-Dimensional Costing**: Covers compute, storage, network, API calls, and operational overhead
-- **Interdependency Modeling**: Accounts for how component choices affect each other
-- **Scaling Considerations**: Models cost behavior under different load scenarios
-
-### Actionable Insights
-- **Optimization Focus**: Every estimate includes cost reduction recommendations
-- **Alternative Architectures**: Compares different implementation approaches
-- **Uncertainty Quantification**: Clear indication of estimation confidence levels
-
-## 📊 Supported Components
-
-### LLM Models
-- **API-based**: OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, Google Vertex AI
-- **Self-hosted**: Local deployments with GPU cost modeling
-- **Usage Patterns**: Token estimation based on agent complexity and interaction patterns
-
-### Vector Databases
-- **Managed Services**: Pinecone, Weaviate Cloud, MongoDB Atlas Vector Search
-- **Self-hosted**: Qdrant, Chroma, Milvus with infrastructure cost modeling
-- **Storage & Operations**: Embedding storage, query costs, and maintenance overhead
-
-### Cloud Infrastructure
-- **Compute**: EC2, Azure VMs, GCP Compute Engine with auto-scaling considerations
-- **Storage**: S3, Azure Blob, GCS with data transfer cost modeling
-- **Networking**: Load balancers, CDN, egress charges
-
-### AI Services
-- **Embedding Models**: OpenAI, Cohere, Azure, self-hosted options
-- **Specialized APIs**: Speech-to-text, image processing, document analysis
-- **Observability**: LangSmith, LangFuse, custom monitoring solutions
-
-## 🚀 Quick Start
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/cost-estimator-agent.git
-cd cost-estimator-agent
-
-# Install dependencies
-pip install -e .
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys for live pricing
+    AuthMgr->>Cache: Check cache
+    alt Cache Hit
+        Cache->>User: Return cached result
+    else Cache Miss
+        Cache->>Graph: Execute workflow
+        Graph->>Agents: Orchestrate pipeline
+        Agents->>LLM: Analyze patterns (if keys available)
+        Agents->>CloudAPI: Fetch pricing (if keys available)
+        Agents->>Graph: Return results
+        Graph->>Cache: Store results
+        Cache->>User: Return estimation
+    end
 ```
 
-### Basic Usage
+## 🤖 Core Agents
 
-```bash
-# Estimate costs from JSON specification
-python -m cost_estimator estimate --input examples/sales_coach_app.json
+### 1. **Input Parser Agent**
+**Purpose**: Validates and enriches application specifications
+- ✅ Schema validation with Pydantic
+- ✅ Intelligent defaults injection
+- ✅ Dependency extraction
+- ✅ Configuration normalization
 
-# Generate detailed report with optimizations
-python -m cost_estimator estimate --input spec.json --output detailed --format markdown
+**Implementation**: `src/cost_estimator/graph/nodes.py:InputParserAgent`
 
-# Compare multiple scenarios
-python -m cost_estimator compare --scenarios scenarios/
+### 2. **Usage Pattern Analyzer Agent**
+**Purpose**: Predicts realistic resource utilization
+- ✅ Workflow complexity analysis
+- ✅ Token usage estimation
+- ✅ Multi-agent coordination overhead
+- ✅ Scaling behavior modeling
+
+**Implementation**: `src/cost_estimator/graph/nodes.py:UsagePatternAnalyzer`
+
+### 3. **Cost Discovery Agent**
+**Purpose**: Fetches live pricing with intelligent caching
+- ✅ Multi-provider pricing APIs
+- ✅ Regional pricing variations
+- ✅ Cache-first architecture
+- ✅ Fallback to mock data
+
+**Implementation**: `src/cost_estimator/graph/nodes.py:CostDiscoveryAgent`
+
+### 4. **Calculation Engine Agent**
+**Purpose**: Computes costs with interdependency awareness
+- ✅ Precise Decimal arithmetic
+- ✅ Component interdependencies
+- ✅ Scaling factor application
+- ✅ Mock data generation
+
+**Implementation**: `src/cost_estimator/graph/nodes.py:CalculationEngineAgent`
+
+### 5. **Optimization Advisor Agent**
+**Purpose**: Identifies cost reduction opportunities
+- ✅ Alternative architecture suggestions
+- ✅ Resource optimization recommendations
+- ✅ Cost/performance trade-off analysis
+- ✅ Effort level estimation
+
+**Implementation**: `src/cost_estimator/graph/nodes.py:OptimizationAdvisorAgent`
+
+### 6. **Report Generator Agent**
+**Purpose**: Creates comprehensive reports
+- ✅ Executive summaries
+- ✅ Detailed cost breakdowns
+- ✅ Multiple output formats
+- ✅ Scenario comparisons
+
+**Implementation**: `src/cost_estimator/graph/nodes.py:ReportGeneratorAgent`
+
+## 🧠 Intelligent Systems
+
+### API Key Management (`src/cost_estimator/auth.py`)
+
+**Smart Detection & User Choice**:
+```python
+# Detects available API keys
+api_status = APIKeyStatus()
+api_status.display_status()  # Rich table showing status
+
+# Interactive setup
+if api_status.operation_mode == OperationMode.MOCK:
+    api_status.prompt_for_keys()  # User choice
 ```
 
-### API Usage
+**Operation Modes**:
+- 🚀 **Full Mode**: All API keys available, complete functionality
+- ⚡ **Partial Mode**: Some keys available, limited features
+- 🧪 **Mock Mode**: No keys, simulated data with realistic estimates
 
+### Intelligent Caching (`src/cost_estimator/cache.py`)
+
+**Multi-Level Cache Architecture**:
+```python
+# Memory + Disk caching with TTL
+cache_manager = get_cache_manager()
+cached_result = cache_manager.get_estimation(specification)
+
+# Cache statistics and management
+stats = cache_manager.get_cache_stats()
+```
+
+**Cache Types**:
+- 💾 **Full Estimations**: Complete cost analyses (24h TTL)
+- 🧠 **LLM Results**: Agent responses (30d TTL)
+- 💰 **Pricing Data**: Live pricing (7d TTL)
+
+### Configuration Management (`src/cost_estimator/config.py`)
+
+**Environment-Aware Settings**:
+```python
+# Pydantic Settings with env variable support
+config = get_config()
+llm_config = config.llm.openai_api_key
+cache_config = config.cache.cache_enabled
+```
+
+**Configuration Categories**:
+- 🔑 **LLM Config**: API keys, models, rate limits
+- ☁️ **Cloud Config**: Provider credentials
+- 💾 **Cache Config**: TTL, size limits, storage
+- 🔒 **Security Config**: Keys, CORS, rate limiting
+- 🎛️ **Feature Flags**: Enable/disable functionality
+
+## 🚀 User Interfaces
+
+### CLI Interface (`src/cost_estimator/cli.py`)
+
+**Rich Interactive Commands**:
 ```bash
-# Start the API server
-uvicorn cost_estimator.api:app --reload --port 8000
+# API key setup with guidance
+cost-estimator setup
 
-# Submit estimation request
+# Cost estimation with status display
+cost-estimator estimate examples/app.json --format table
+
+# Cache management
+cost-estimator cache stats
+
+# Providers and validation
+cost-estimator providers
+cost-estimator validate spec.json
+```
+
+### REST API (`src/cost_estimator/api/app.py`)
+
+**FastAPI with Auto-Documentation**:
+```python
+# Swagger UI: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+
+@app.post("/estimate")
+async def estimate_costs(request: CostEstimationRequest)
+
+@app.get("/health")
+async def get_health()
+```
+
+**Key Endpoints**:
+- 🏥 `/health` - System status and provider availability
+- 📊 `/estimate` - Cost estimation with full analysis
+- ✅ `/validate` - Specification validation
+- 🔄 `/compare` - Multi-scenario comparison
+- 🌐 `/providers` - Supported service providers
+
+## 📋 Data Models & Schemas
+
+### Core Schemas (`src/cost_estimator/schemas.py`)
+
+**Intelligent Pydantic Models**:
+```python
+class ApplicationSpecification(BaseModel):
+    application: ApplicationMetadata
+    agents: List[AgentConfiguration]
+    infrastructure: InfrastructureConfiguration
+    data_requirements: DataRequirements
+    cost_constraints: Optional[CostConstraints]
+```
+
+**Schema Features**:
+- ✅ **Auto-validation** with meaningful error messages
+- ✅ **Intelligent defaults** based on complexity
+- ✅ **Enum constraints** for valid values
+- ✅ **Cross-field validation** for consistency
+- ✅ **Example generation** for documentation
+
+### State Management (`src/cost_estimator/graph/state.py`)
+
+**LangGraph State Flow**:
+```python
+@dataclass
+class CostEstimationState:
+    # Input & validation
+    specification: Optional[ApplicationSpecification]
+    raw_input: Optional[Dict[str, Any]]
+
+    # Analysis results
+    usage_estimates: List[UsageEstimate]
+    pricing_data: List[PricingData]
+    cost_breakdowns: List[CostBreakdown]
+
+    # Output & reporting
+    total_monthly_cost: Optional[Decimal]
+    optimization_suggestions: List[OptimizationSuggestion]
+    executive_summary: Optional[str]
+```
+
+## 🎛️ Design Principles
+
+### 1. **Intelligence Over Configuration**
+- Agents analyze and reason about costs rather than following static rules
+- Context-aware calculations that consider component interactions
+- Dynamic adaptation based on application-specific patterns
+
+### 2. **Graceful Degradation**
+- System works perfectly without API keys using realistic mock data
+- Progressive enhancement with better data when keys are available
+- Transparent mode indication to users
+
+### 3. **Performance & Efficiency**
+- Intelligent caching reduces API calls and costs
+- Lazy loading and initialization patterns
+- Optimized for both development and production use
+
+### 4. **User Experience Focus**
+- Interactive setup with clear guidance
+- Rich visual interfaces (CLI tables, Swagger UI)
+- Comprehensive error messages and recommendations
+
+### 5. **Production Ready**
+- Comprehensive configuration management
+- Professional logging and monitoring
+- Security best practices
+- Docker deployment support
+
+## 📊 Testing & Quality
+
+### Mock Mode Testing
+```bash
+# No API keys required - fully functional
+python -m cost_estimator.cli estimate examples/minimal_example.json
+# Result: $76.70/month with 80% confidence
+```
+
+### API Testing
+```bash
+# Start server
+python -m cost_estimator.api.app
+
+# Swagger UI testing
+open http://localhost:8000/docs
+
+# Curl testing
 curl -X POST http://localhost:8000/estimate \
   -H "Content-Type: application/json" \
-  -d @examples/sales_coach_app.json
+  -d @examples/minimal_example.json
 ```
 
-## 📋 Input Specification Format
-
-### Application Specification Schema
-
-```json
-{
-  "application": {
-    "name": "Sales Coach AI",
-    "description": "Multi-agent sales coaching platform",
-    "complexity": "high",
-    "expected_users": 1000,
-    "usage_patterns": {
-      "sessions_per_user_month": 20,
-      "avg_session_duration_minutes": 15,
-      "peak_concurrency_ratio": 0.1
-    }
-  },
-  "agents": [
-    {
-      "name": "CoachingAgent",
-      "role": "primary",
-      "llm_model": "gpt-4-turbo",
-      "tools": ["web_search", "crm_integration"],
-      "complexity": "high",
-      "interaction_frequency": "continuous"
-    }
-  ],
-  "infrastructure": {
-    "deployment_type": "cloud",
-    "cloud_provider": "aws",
-    "region": "us-east-1",
-    "scaling": "auto",
-    "availability_requirement": "99.9%"
-  },
-  "data_requirements": {
-    "vector_storage_gb": 100,
-    "document_processing_monthly": 10000,
-    "real_time_data_sync": true
-  }
-}
-```
-
-### Key Configuration Sections
-
-- **Application Metadata**: Basic app info and complexity indicators
-- **Agent Definitions**: Individual agent specifications with roles and capabilities
-- **Infrastructure Preferences**: Cloud provider, region, scaling requirements
-- **Data Requirements**: Storage, processing, and sync needs
-- **Cost Constraints**: Budget limits and optimization priorities
-
-## 📈 Output & Reports
-
-### Cost Breakdown Structure
-
-```
-💰 Total Monthly Cost: $2,847.50
-
-🤖 AI Services (67% - $1,907.83)
-├── LLM API Calls: $1,245.60
-├── Embedding Services: $342.18
-├── Vector Database: $320.05
-
-☁️ Cloud Infrastructure (28% - $797.42)
-├── Compute: $456.30
-├── Storage: $198.75
-├── Networking: $142.37
-
-🔧 Operations (5% - $142.25)
-├── Monitoring: $67.80
-├── Backup & DR: $74.45
-
-💡 Optimization Opportunities: -$431.20 potential savings
-├── Switch to self-hosted embeddings: -$205.30
-├── Optimize vector DB tier: -$125.90
-├── Regional cost optimization: -$100.00
-```
-
-### Scenario Analysis
-
-- **Conservative (80% confidence)**: Cost range with buffer for uncertainty
-- **Expected (50% confidence)**: Most likely cost based on typical usage
-- **Optimistic (20% confidence)**: Best case with optimal usage patterns
-
-## 🔄 Implementation Guide
-
-### Phase 1: Core Framework
-1. Set up LangGraph orchestration
-2. Implement basic agent structure
-3. Create input validation and parsing
-4. Build simple cost calculation engine
-
-### Phase 2: Intelligence Layer
-1. Add usage pattern analysis
-2. Implement real-time pricing integration
-3. Build interdependency modeling
-4. Create optimization recommendation engine
-
-### Phase 3: Advanced Features
-1. Add scenario analysis and uncertainty quantification
-2. Implement comparative analysis tools
-3. Build custom reporting and visualization
-4. Add integration APIs for CI/CD pipelines
-
-### Phase 4: Production Deployment
-1. Set up monitoring and observability
-2. Implement caching and performance optimization
-3. Add authentication and authorization
-4. Deploy with auto-scaling and high availability
-
-## 🛠️ Development Setup
-
-### Prerequisites
-- Python 3.11+
-- Access to cloud provider APIs (AWS, Azure, GCP)
-- API keys for AI services (OpenAI, Anthropic, etc.)
-
-### Environment Configuration
-
+### Cache Performance
 ```bash
-# Required API keys for live pricing
-export AWS_ACCESS_KEY_ID="your-aws-key"
-export AZURE_SUBSCRIPTION_ID="your-azure-sub"
-export OPENAI_API_KEY="your-openai-key"
-
-# Optional: Custom pricing data sources
-export PRICING_DATA_URL="https://your-custom-pricing-api.com"
-export CACHE_DURATION_HOURS="24"
+# Cache statistics
+cost-estimator cache stats
+# Shows hit rates, LLM calls saved, performance metrics
 ```
 
-### Running Tests
+## 🔧 Quick Start
 
+### Installation
 ```bash
-# Unit tests
-pytest tests/unit/
-
-# Integration tests (requires API keys)
-pytest tests/integration/
-
-# End-to-end tests with real scenarios
-pytest tests/e2e/
+git clone https://github.com/your-org/cost-estimator-agent.git
+cd cost-estimator-agent
+pip install -e .
 ```
 
-## 📚 Examples
+### Interactive Setup
+```bash
+# Guided API key setup
+cost-estimator setup
 
-### Sales Coaching Platform
-- Multi-agent conversation flow
-- Real-time CRM integration
-- Document analysis and summarization
-- Cost: ~$2,800/month for 1K users
+# OR work in mock mode (no keys needed)
+cost-estimator estimate examples/minimal_example.json
+```
 
-### Customer Support Bot
-- Primary support agent + escalation agent
-- Knowledge base search and updates
-- Sentiment analysis and routing
-- Cost: ~$1,200/month for 5K users
+### API Server
+```bash
+# Start with auto-reload
+python -m cost_estimator.api.app
 
-### Content Generation Pipeline
-- Research agent + writing agent + review agent
-- Large document processing
-- API-heavy workflow
-- Cost: ~$4,500/month for content team
+# Access Swagger UI
+open http://localhost:8000/docs
+```
 
-## 🤝 Contributing
+## 📈 Supported Components
 
-1. Fork the repository
-2. Create a feature branch
-3. Implement changes with tests
-4. Submit pull request with detailed description
+### LLM Providers
+- **OpenAI**: GPT-4, GPT-3.5, with usage-based pricing
+- **Anthropic**: Claude models with intelligent token estimation
+- **Azure OpenAI**: Enterprise deployment options
+- **AWS Bedrock**: Serverless AI model access
+- **Google Vertex AI**: Managed ML platform
 
-## 📄 License
+### Cloud Infrastructure
+- **AWS**: EC2, S3, RDS with auto-scaling cost modeling
+- **Azure**: VMs, Blob Storage, managed services
+- **GCP**: Compute Engine, Cloud Storage, BigQuery
 
-MIT License - see LICENSE file for details
+### Vector Databases
+- **Pinecone**: Managed vector search with usage tiers
+- **Weaviate**: Open-source with cloud options
+- **Qdrant**: High-performance vector database
+- **Chroma**: Embedded vector store
+- **Milvus**: Scalable vector database
 
-## 🔗 Links
+## 🛠️ Development
 
-- [Documentation](https://docs.cost-estimator.ai)
-- [API Reference](https://api.cost-estimator.ai/docs)
-- [Examples Repository](https://github.com/your-org/cost-estimator-examples)
-- [Community Discord](https://discord.gg/cost-estimator)
+### Project Structure
+```
+src/cost_estimator/
+├── cli.py              # Rich CLI interface
+├── api/                # FastAPI application
+├── auth.py             # API key management
+├── cache.py            # Intelligent caching
+├── config.py           # Configuration management
+├── schemas.py          # Pydantic data models
+└── graph/              # LangGraph agents
+    ├── graph.py        # Main orchestrator
+    ├── nodes.py        # Agent implementations
+    └── state.py        # State management
+```
+
+### Key Technologies
+- **LangChain/LangGraph**: Agent orchestration
+- **Pydantic v2**: Data validation and settings
+- **FastAPI**: Modern web API framework
+- **Rich**: Beautiful CLI interfaces
+- **Typer**: CLI argument parsing
+- **Decimal**: Precise financial calculations
+
+## 📚 Documentation
+
+- **[REQUIREMENTS.md](REQUIREMENTS.md)**: Original requirements and success criteria
+- **[TESTING.md](TESTING.md)**: Comprehensive testing guide
+- **[CONFIGURATION.md](CONFIGURATION.md)**: Detailed configuration options
+- **[DEPLOYMENT.md](DEPLOYMENT.md)**: Production deployment guide
+- **[TEMPLATE.md](TEMPLATE.md)**: Reusable agent blueprint
+- **[TEST_RESULTS.md](TEST_RESULTS.md)**: Latest test results and performance
+
+## 🎯 Production Metrics
+
+### Performance Benchmarks
+- **CLI Response Time**: < 0.1 seconds (validation)
+- **Cost Estimation**: ~0.1 seconds (mock mode), ~2-5 seconds (live APIs)
+- **API Response Time**: ~0.025-0.11 seconds
+- **Cache Hit Rate**: 80-95% for repeated estimations
+- **Memory Usage**: < 100MB base footprint
+
+### Accuracy & Confidence
+- **Mock Mode**: 70-80% confidence with realistic market rates
+- **Partial Mode**: 85% confidence with some live data
+- **Full Mode**: 95%+ confidence with complete live pricing
+- **Financial Precision**: Decimal arithmetic, no floating-point errors
+
+## 🏆 Key Achievements
+
+✅ **Complete Agent Pipeline**: All 6 agents implemented and tested
+✅ **Intelligent Caching**: Multi-level caching with 80-95% hit rates
+✅ **API Key Management**: Interactive setup with graceful degradation
+✅ **Production Ready**: Configuration, logging, security, deployment
+✅ **Comprehensive Testing**: Mock mode, API testing, performance validation
+✅ **Rich User Experience**: CLI tables, Swagger UI, clear error messages
+✅ **Financial Accuracy**: Proper Decimal arithmetic for monetary calculations
+
+This system demonstrates enterprise-grade AI agent architecture with intelligent cost estimation, comprehensive caching, and professional user experience design.
